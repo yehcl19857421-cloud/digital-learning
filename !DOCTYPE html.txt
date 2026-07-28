@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>個人數位學習護照</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+    .card { background: white; padding: 30px; border-radius: 12px; width: 320px; text-align: center; }
+    input { width: 100%; padding: 10px; margin: 10px 0; border: 10px border-box; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 登入彈窗 -->
+  <div id="loginModal" class="modal">
+    <div class="card">
+      <h2>個人數位學習護照</h2>
+      <input type="text" id="empName" placeholder="輸入中文姓名">
+      <input type="text" id="empDob" placeholder="出生年月日 (如 801230)">
+      <button onclick="login()">🔍 開始查詢</button>
+    </div>
+  </div>
+
+  <!-- 2. 主畫面 (驗證成功後顯示) -->
+  <div id="mainContent" class="hidden">
+    <h1 id="welcomeText">歡迎回來</h1>
+    <div id="courseArea">
+      <h3>必修課程</h3>
+      <div id="courseList">載入中...</div>
+    </div>
+  </div>
+
+  <script>
+    // 替換成您在 Apps Script 取得的 Web API URL
+    const API_URL = "https://script.google.com/macros/s/您的API_ID/exec";
+    let currentUser = null;
+
+    // 登入驗證
+    async function login() {
+      const name = document.getElementById('empName').value;
+      const dob = document.getElementById('empDob').value;
+
+      if (!name || !dob) return alert("請完整填寫姓名與生日！");
+
+      const res = await fetch(`${API_URL}?action=login&name=${encodeURIComponent(name)}&dob=${dob}`);
+      const data = await res.json();
+
+      if (data.success) {
+        currentUser = data.user;
+        document.getElementById('loginModal').classList.add('hidden');
+        document.getElementById('mainContent').classList.remove('hidden');
+        document.getElementById('welcomeText').innerText = `歡迎，${currentUser.name} (${currentUser.dept})`;
+        loadCourses();
+      } else {
+        alert(data.message);
+      }
+    }
+
+    // 載入課程
+    async function loadCourses() {
+      const res = await fetch(`${API_URL}?action=getCourses`);
+      const data = await res.json();
+      
+      const listDiv = document.getElementById('courseList');
+      listDiv.innerHTML = "";
+
+      data.courses.forEach(c => {
+        listDiv.innerHTML += `
+          <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+            <h4>${c.year} - ${c.title} (${c.hours}小時)</h4>
+            <button onclick="checkin('${c.id}')" style="width: auto; padding: 5px 15px; background: #10b981;">① 簽到</button>
+          </div>
+        `;
+      });
+    }
+
+    // 執行簽到
+    async function checkin(courseId) {
+      const res = await fetch(`${API_URL}?action=checkin&name=${encodeURIComponent(currentUser.name)}&courseId=${courseId}`);
+      const data = await res.json();
+      alert(data.message);
+    }
+  </script>
+</body>
+</html>

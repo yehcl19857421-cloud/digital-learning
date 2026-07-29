@@ -125,37 +125,40 @@
   }
 
   // 動態繪製課程清單
-  function renderCourses(courses) {
-    const container = document.getElementById("course-container");
-    container.innerHTML = "";
+ function renderCourses(courses) {
+  const container = document.getElementById("course-container");
+  container.innerHTML = "";
 
-    if (!courses || courses.length === 0) {
-      container.innerHTML = "<p>目前尚無課程資料。</p>";
-      return;
-    }
-
-    courses.forEach(c => {
-      const card = document.createElement("div");
-      card.className = "course-card";
-      
-      const isDone = (c.completionStatus === "已完成");
-      
-      card.innerHTML = `
-        <div>
-          <small style="color: #007bff; font-weight: bold;">📘 ${c.year}</small>
-          <div class="course-title">${c.title}</div>
-        </div>
-        <div class="course-meta">
-          <span>時數：${c.hours} 小時</span>
-          <button class="action-btn ${isDone ? 'done' : ''}" onclick="doSignIn('${c.id}', ${isDone})">
-            ${isDone ? '已完成 ✔' : '① 簽到並上課'}
-          </button>
-        </div>
-      `;
-      container.appendChild(card);
-    });
+  if (!courses || courses.length === 0) {
+    container.innerHTML = "<p>目前尚無課程資料。</p>";
+    return;
   }
 
+  courses.forEach(c => {
+    const card = document.createElement("div");
+    card.className = "course-card";
+    
+    // 判斷是否有影片網址，如果沒有就顯示提示
+    const hasVideo = c.videoUrl && c.videoUrl.trim() !== "";
+    
+    card.innerHTML = `
+      <div>
+        <small style="color: #007bff; font-weight: bold;">📘 ${c.year}</small>
+        <div class="course-title">${c.title}</div>
+        <small>時數：${c.hours} 小時</small>
+      </div>
+
+      <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+        ${hasVideo 
+          ? `<a href="${c.videoUrl}" target="_blank" class="action-btn" style="text-decoration: none; text-align: center;">▶ 觀看影片</a>`
+          : `<span style="color: #999; font-size: 12px;">(未設定影片連結)</span>`
+        }
+      </div>
+    `;
+    
+    container.appendChild(card);
+  });
+}
   // 點擊簽到/上課功能
   function doSignIn(courseId, isDone) {
     if (isDone) {

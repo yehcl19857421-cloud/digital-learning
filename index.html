@@ -2,87 +2,183 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>個人數位學習護照</title>
   <style>
-    body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
-    .card { background: white; padding: 30px; border-radius: 12px; width: 320px; text-align: center; }
-    input { width: 100%; padding: 10px; margin: 10px 0; border: 10px border-box; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    button { width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-    .hidden { display: none; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: #2b303a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .card {
+      background-color: #3f4652;
+      width: 100%;
+      max-width: 400px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .card h2 {
+      margin-bottom: 25px;
+      font-size: 22px;
+      letter-spacing: 1px;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #5a6270;
+      border-radius: 8px;
+      background-color: #2b303a;
+      color: #ffffff;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: #4c8bf5;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #3b66bc;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #2e54a1;
+    }
+
+    .btn:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .result-box {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .result-box.success {
+      background-color: #1e4620;
+      border: 1px solid #2e7d32;
+      color: #e8f5e9;
+    }
+
+    .result-box.error {
+      background-color: #4a151b;
+      border: 1px solid #c62828;
+      color: #ffebee;
+    }
   </style>
 </head>
 <body>
 
-  <!-- 1. 登入彈窗 -->
-  <div id="loginModal" class="modal">
-    <div class="card">
-      <h2>個人數位學習護照</h2>
-      <input type="text" id="empName" placeholder="輸入中文姓名">
-      <input type="text" id="empDob" placeholder="出生年月日 (如 801230)">
-      <button onclick="login()">🔍 開始查詢</button>
+  <div class="card">
+    <h2>個人數位學習護照</h2>
+    
+    <div class="input-group">
+      <input type="text" id="account" placeholder="姓名 / 帳號" autocomplete="off">
     </div>
-  </div>
+    
+    <div class="input-group">
+      <input type="password" id="password" placeholder="身分證 / 密碼" autocomplete="off">
+    </div>
 
-  <!-- 2. 主畫面 (驗證成功後顯示) -->
-  <div id="mainContent" class="hidden">
-    <h1 id="welcomeText">歡迎回來</h1>
-    <div id="courseArea">
-      <h3>必修課程</h3>
-      <div id="courseList">載入中...</div>
-    </div>
+    <button class="btn" id="submitBtn" onclick="queryPassport()">🔍 開始查詢</button>
+
+    <div id="result" class="result-box"></div>
   </div>
 
   <script>
-    // 替換成您在 Apps Script 取得的 Web API URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbyCRauz5wCnKLt-Fgvn7m8sjV2Rm6CYT9GGY8NtFn1qxFJ69q4Um3BpnV6LIX_zQZra/exec";
-    let currentUser = null;
+    // ⚠️ 請將下方的網址替換為你實際部署的 Google Apps Script Web App 網址 (/exec 結尾)
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyCRauz5wCnKLt-Fgvn7m8sjV2Rm6CYT9GGY8NtFn1qxFJ69q4Um3BpnV6LIX_zQZra/exec";
 
-    // 登入驗證
-    async function login() {
-      const name = document.getElementById('empName').value;
-      const dob = document.getElementById('empDob').value;
+    async function queryPassport() {
+      const accountInput = document.getElementById('account').value.trim();
+      const passwordInput = document.getElementById('password').value.trim();
+      const btn = document.getElementById('submitBtn');
+      const resultDiv = document.getElementById('result');
 
-      if (!name || !dob) return alert("請完整填寫姓名與生日！");
-
-      const res = await fetch(`${API_URL}?action=login&name=${encodeURIComponent(name)}&dob=${dob}`);
-      const data = await res.json();
-
-      if (data.success) {
-        currentUser = data.user;
-        document.getElementById('loginModal').classList.add('hidden');
-        document.getElementById('mainContent').classList.remove('hidden');
-        document.getElementById('welcomeText').innerText = `歡迎，${currentUser.name} (${currentUser.dept})`;
-        loadCourses();
-      } else {
-        alert(data.message);
+      // 1. 前端初步驗證
+      if (!accountInput || !passwordInput) {
+        alert("請輸入帳號與密碼！");
+        return;
       }
-    }
 
-    // 載入課程
-    async function loadCourses() {
-      const res = await fetch(`${API_URL}?action=getCourses`);
-      const data = await res.json();
-      
-      const listDiv = document.getElementById('courseList');
-      listDiv.innerHTML = "";
+      if (GAS_WEB_APP_URL.includes("你的部署ID")) {
+        alert("請先在 HTML 程式碼中將 GAS_WEB_APP_URL 替換為你的 Google Apps Script 網址！");
+        return;
+      }
 
-      data.courses.forEach(c => {
-        listDiv.innerHTML += `
-          <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-            <h4>${c.year} - ${c.title} (${c.hours}小時)</h4>
-            <button onclick="checkin('${c.id}')" style="width: auto; padding: 5px 15px; background: #10b981;">① 簽到</button>
-          </div>
-        `;
-      });
-    }
+      // 2. 切換按鈕狀態
+      btn.disabled = true;
+      btn.innerText = "查詢中...";
+      resultDiv.style.display = "none";
 
-    // 執行簽到
-    async function checkin(courseId) {
-      const res = await fetch(`${API_URL}?action=checkin&name=${encodeURIComponent(currentUser.name)}&courseId=${courseId}`);
-      const data = await res.json();
-      alert(data.message);
+      try {
+        // 3. 組成包含網址編碼的 API URL
+        const targetUrl = `${GAS_WEB_APP_URL}?action=login&account=${encodeURIComponent(accountInput)}&password=${encodeURIComponent(passwordInput)}`;
+
+        // 4. 發送請求
+        const response = await fetch(targetUrl);
+        const data = await response.json();
+
+        // 5. 處理結果
+        if (data.status === "success") {
+          resultDiv.className = "result-box success";
+          resultDiv.innerHTML = `
+            <strong>🎉 查詢成功</strong><br>
+            <strong>姓名：</strong> ${data.data.name}<br>
+            <strong>編號：</strong> ${data.data.id}<br>
+            <strong>時間：</strong> ${data.data.timestamp}
+          `;
+          resultDiv.style.display = "block";
+        } else {
+          resultDiv.className = "result-box error";
+          resultDiv.innerHTML = `<strong>❌ 查詢失敗：</strong> ${data.message}`;
+          resultDiv.style.display = "block";
+        }
+      } catch (error) {
+        console.error("Fetch 錯誤:", error);
+        alert("連線失敗，請檢查網路或確認後端部署網址是否正確。");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "🔍 開始查詢";
+      }
     }
   </script>
 </body>
 </html>
+ 

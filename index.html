@@ -11,199 +11,166 @@
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-
     body {
-      background-color: #1e1e24;
-      color: #333;
+      background-color: #2b2b2b;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
     }
-
     .card {
       background: #ffffff;
-      padding: 32px 28px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
+      padding: 30px 25px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       text-align: center;
     }
-
-    .card h1 {
-      font-size: 1.5rem;
-      margin-bottom: 24px;
-      color: #2b2d42;
-      font-weight: 700;
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 25px;
     }
-
     .input-group {
-      margin-bottom: 16px;
+      margin-bottom: 15px;
     }
-
-    .input-group input {
+    .input-control {
       width: 100%;
-      padding: 12px 16px;
-      border: 1px solid #d1d5db;
+      padding: 12px 15px;
+      border: 1px solid #e0e0e0;
+      background-color: #f8f9fa;
       border-radius: 8px;
-      font-size: 1rem;
+      font-size: 15px;
       outline: none;
-      transition: all 0.2s ease-in-out;
-      background-color: #f9fafb;
+      transition: border-color 0.2s;
     }
-
-    .input-group input:focus {
+    .input-control:focus {
       border-color: #3b82f6;
-      background-color: #ffffff;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      background-color: #fff;
     }
-
     .btn {
       width: 100%;
       padding: 12px;
-      background-color: #2563eb;
+      background-color: #3b82f6;
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
       transition: background-color 0.2s;
-      margin-top: 8px;
+      margin-top: 10px;
     }
-
     .btn:hover {
-      background-color: #1d4ed8;
+      background-color: #2563eb;
     }
-
     .btn:disabled {
-      background-color: #93c5fd;
+      background-color: #9ca3af;
       cursor: not-allowed;
     }
-
-    /* 結果提示框 */
     .result-box {
-      margin-top: 20px;
-      padding: 12px 16px;
+      margin-top: 15px;
+      padding: 12px;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 14px;
       display: none;
-      word-break: break-word;
-      line-height: 1.5;
     }
-
     .result-box.success {
       display: block;
-      background-color: #d1fae5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
+      background-color: #e6f4ea;
+      color: #137333;
+      border: 1px solid #ceead6;
     }
-
     .result-box.error {
       display: block;
-      background-color: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fca5a5;
-    }
-
-    .result-box.loading {
-      display: block;
-      background-color: #f3f4f6;
-      color: #4b5563;
-      border: 1px solid #e5e7eb;
+      background-color: #fce8e6;
+      color: #c5221f;
+      border: 1px solid #fad2cf;
     }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h1>個人數位學習護照</h1>
+    <div class="title">個人數位學習護照</div>
 
-    <!-- 輸入框：帳號 / 姓名 -->
     <div class="input-group">
-      <input type="text" id="account" placeholder="請輸入姓名 / 帳號" autocomplete="off" />
+      <input type="text" id="account" class="input-control" placeholder="請輸入姓名" autocomplete="off" />
     </div>
 
-    <!-- 輸入框：密碼 / 身分證 -->
     <div class="input-group">
-      <input type="password" id="password" placeholder="請輸入身分證 / 密碼" autocomplete="off" />
+      <input type="password" id="password" class="input-control" placeholder="請輸入密碼 / 身分證" autocomplete="off" />
     </div>
 
-    <!-- 按鈕：加上 type="button" 避免表單自動刷新 -->
     <button type="button" class="btn" id="submitBtn" onclick="queryPassport()">🔍 開始查詢</button>
 
-    <!-- 結果顯示區塊 -->
     <div id="result" class="result-box"></div>
   </div>
 
   <script>
-    // 後端 Apps Script API 網址
+    // ⚠️ 請將下方的網址替換為你實際部署的 Google Apps Script 網址 (結尾必須是 /exec)
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyCRauz5wCnKLt-Fgvn7m8sjV2Rm6CYT9GGY8NtFn1qxFJ69q4Um3BpnV6LIX_zQZra/exec";
 
-    // 鍵盤按下 Enter 鍵自動觸發查詢
-    document.addEventListener("DOMContentLoaded", () => {
-      const inputs = document.querySelectorAll("#account, #password");
-      inputs.forEach(input => {
-        input.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") {
-            queryPassport();
-          }
-        });
-      });
-    });
-
-    // 核心查詢函式
     async function queryPassport() {
       const accountEl = document.getElementById('account');
       const passwordEl = document.getElementById('password');
       const btn = document.getElementById('submitBtn');
       const resultDiv = document.getElementById('result');
 
-      const accountInput = accountEl ? accountEl.value.trim() : "";
-      const passwordInput = passwordEl ? passwordEl.value.trim() : "";
+      const accountInput = accountEl.value.trim();
+      const passwordInput = passwordEl.value.trim();
 
-      // 1. 前端欄位檢查
+      // 清空結果狀態
+      resultDiv.className = "result-box";
+      resultDiv.innerText = "";
+
+      // 1. 前端初步欄位檢查
       if (!accountInput || !passwordInput) {
-        alert("請輸入帳號與密碼！");
+        showResult("請輸入姓名與密碼！", "error");
         return;
       }
 
-      // 2. 切換UI為查詢中狀態
+      // 2. 開啟載入狀態
       btn.disabled = true;
-      btn.innerText = "查詢中...";
-      resultDiv.className = "result-box loading";
-      resultDiv.innerText = "資料連線中，請稍候...";
+      btn.innerText = "連線中...";
+
+      // 3. 組合 GET URL
+      const requestUrl = `${GAS_WEB_APP_URL}?action=login&account=${encodeURIComponent(accountInput)}&password=${encodeURIComponent(passwordInput)}`;
 
       try {
-        // 3. 組成請求網址 (對應後端的 GET 參數)
-        const requestUrl = `${GAS_WEB_APP_URL}?action=login&account=${encodeURIComponent(accountInput)}&password=${encodeURIComponent(passwordInput)}`;
+        const response = await fetch(requestUrl, {
+          method: 'GET',
+          redirect: 'follow'
+        });
 
-        // 4. 發送 Fetch 請求
-        const response = await fetch(requestUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP 錯誤，狀態碼: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        console.log("後端回傳資料:", data);
-
-        // 5. 更新結果區塊 UI
         if (data.status === "success") {
-          resultDiv.className = "result-box success";
-          resultDiv.innerHTML = `<strong>✅ ${data.message || '查詢成功！'}</strong>`;
+          showResult(`✅ ${data.message}`, "success");
         } else {
-          resultDiv.className = "result-box error";
-          resultDiv.innerHTML = `<strong>❌ ${data.message || '帳號或密碼錯誤'}</strong>`;
+          showResult(`❌ ${data.message}`, "error");
         }
 
       } catch (error) {
-        console.error("Fetch 錯誤:", error);
-        resultDiv.className = "result-box error";
-        resultDiv.innerHTML = `<strong>❌ 連線失敗</strong><br>無法連接至伺服器，請檢查網路連線。`;
+        console.error("Fetch Error:", error);
+        showResult("❌ 連線失敗：無法連接至伺服器，請檢查權限設定或 API 網址。", "error");
       } finally {
-        // 6. 恢復按鈕狀態
         btn.disabled = false;
         btn.innerText = "🔍 開始查詢";
       }
+    }
+
+    function showResult(message, type) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerText = message;
+      resultDiv.className = `result-box ${type}`;
     }
   </script>
 

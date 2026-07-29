@@ -3,113 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>個人數位學習護照 - 登入查詢</title>
+  <title>個人數位學習護照 - 登入</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    body {
-      background-color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .card {
-      background: #e0e0e0;
-      padding: 30px 25px;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 380px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-      text-align: center;
-    }
-    .card h2 {
-      color: #222;
-      margin-bottom: 25px;
-      font-size: 22px;
-      letter-spacing: 1px;
-    }
-    .input-group {
-      margin-bottom: 15px;
-    }
-    .input-group input {
-      width: 100%;
-      padding: 12px 15px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 15px;
-      outline: none;
-      background-color: #f9f9f9;
-    }
-    .input-group input:focus {
-      border-color: #3b82f6;
-      background-color: #fff;
-    }
-    .btn {
-      width: 100%;
-      padding: 12px;
-      background-color: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .btn:hover {
-      background-color: #2563eb;
-    }
-    .btn:disabled {
-      background-color: #9ca3af;
-      cursor: not-allowed;
-    }
-    .result-box {
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 14px;
-      display: none;
-    }
-    .result-box.success {
-      display: block;
-      background-color: #d1fae5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-    }
-    .result-box.error {
-      display: block;
-      background-color: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fca5a5;
-    }
+    body { font-family: "Microsoft JhengHei", sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .box { background: white; padding: 30px; border-radius: 10px; width: 320px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    input { width: 90%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { width: 90%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+    button:disabled { background: #aaa; }
+    #result { margin-top: 15px; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <div class="card">
+  <div class="box">
     <h2>個人數位學習護照</h2>
-    
-    <div class="input-group">
-      <input type="text" id="account" placeholder="姓名" autocomplete="off" />
-    </div>
-    
-    <div class="input-group">
-      <input type="password" id="password" placeholder="出生年月日" autocomplete="off" />
-    </div>
-
-    <button type="button" class="btn" id="submitBtn" onclick="queryPassport()">🔍 開始查詢</button>
-
-    <div id="result" class="result-box"></div>
+    <input type="text" id="account" placeholder="請輸入姓名 ">
+    <input type="password" id="password" placeholder="請輸入出生年月日">
+    <button type="button" id="submitBtn" onclick="queryPassport()">🔍 開始查詢</button>
+    <div id="result"></div>
   </div>
 
   <script>
-    // ⚠️ 請填入你最新部署的 Apps Script Web App 網址 (/exec 結尾)
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyCRauz5wCnKLt-Fgvn7m8sjV2Rm6CYT9GGY8NtFn1qxFJ69q4Um3BpnV6LIX_zQZra/exec";
+    // 你的 Google Apps Script 部署網址
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfyebyCRauz5wCnKLt-Fgvn7m8sjV2Rm6CYT9GGY8NtFn1qxFJ69q4Um3BpnV6LIX_zQZra/exec";
 
     async function queryPassport() {
       const accountEl = document.getElementById('account');
@@ -120,57 +36,43 @@
       const accountInput = accountEl.value.trim();
       const passwordInput = passwordEl.value.trim();
 
-      // 1. 前端初步驗證
       if (!accountInput || !passwordInput) {
         alert("請輸入帳號與密碼！");
         return;
       }
 
-      // 2. 更新按鈕狀態
       btn.disabled = true;
       btn.innerText = "查詢中...";
-      resultDiv.className = "result-box";
-      resultDiv.style.display = "none";
-
-      // 3. 發送請求
-      const requestUrl = `${GAS_WEB_APP_URL}?action=login&account=${encodeURIComponent(accountInput)}&password=${encodeURIComponent(passwordInput)}`;
+      resultDiv.innerText = "資料傳輸中，請稍候...";
 
       try {
-        const response = await fetch(requestUrl, {
-          method: 'GET',
-          redirect: 'follow'
-        });
-
+        const requestUrl = `${GAS_WEB_APP_URL}?action=login&account=${encodeURIComponent(accountInput)}&password=${encodeURIComponent(passwordInput)}`;
+        const response = await fetch(requestUrl, { method: 'GET', redirect: 'follow' });
         const data = await response.json();
 
         if (data.status === "success") {
-          resultDiv.className = "result-box success";
-          resultDiv.innerText = `✅ ${data.message}`;
-
-          // 將使用者資料暫存在瀏覽器
-          localStorage.setItem("passport_user", JSON.stringify(data.user));
-
-          // 延遲 1 秒後自動跳轉到護照展示頁
+          resultDiv.style.color = "green";
+          resultDiv.innerText = "✅ 驗證成功！正在進入學習護照...";
+          
+          // 儲存姓名並帶著網址參數跳轉
+          localStorage.setItem("userData", JSON.stringify({ name: accountInput }));
+          
           setTimeout(() => {
-            window.location.href = "passport.html";
+            window.location.href = `passport.html?name=${encodeURIComponent(accountInput)}`;
           }, 1000);
-
         } else {
-          resultDiv.className = "result-box error";
+          resultDiv.style.color = "red";
           resultDiv.innerText = `❌ ${data.message}`;
           btn.disabled = false;
           btn.innerText = "🔍 開始查詢";
         }
-
-      } catch (error) {
-        console.error("連線錯誤:", error);
-        resultDiv.className = "result-box error";
-        resultDiv.innerText = `❌ 連線失敗，請檢查網路設定。`;
+      } catch (err) {
+        resultDiv.style.color = "red";
+        resultDiv.innerText = `❌ 連線失敗：${err.message}`;
         btn.disabled = false;
         btn.innerText = "🔍 開始查詢";
       }
     }
   </script>
-
 </body>
 </html>

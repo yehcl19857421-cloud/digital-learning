@@ -160,22 +160,35 @@
   });
 }
   // 點擊簽到/上課功能
-  function doSignIn(courseId, isDone) {
-    if (isDone) {
-      alert("此課程您已經完成簽到與修課囉！");
-      return;
-    }
+  <video id="courseVideo" controls width="640">
+  <source src="your-video.mp4" type="video/mp4">
+  您的瀏覽器不支援影片播放。
+</video>
 
-    if (confirm("是否要完成此課程的簽到與上課紀錄？")) {
-      fetch(`${GAS_URL}?action=signInCourse&name=${encodeURIComponent(currentName)}&courseId=${encodeURIComponent(courseId)}`)
-        .then(res => res.json())
-        .then(res => {
-          alert("簽到與修課紀錄已成功儲存！");
-          fetchPassportData(); // 重新整理頁面數據
-        });
-    }
+<script>
+  const GAS_URL = "你的 Google Apps Script 發布網址";
+  const userName = "張三";        // 替換為實際學員姓名
+  const courseId = "COURSE01";   // 替換為實際課程代碼
+
+  // 1. 觸發簽到（例如點擊簽到按鈕或進入頁面時觸發）
+  function doSignIn() {
+    fetch(`${GAS_URL}?action=signIn&name=${encodeURIComponent(userName)}&courseId=${encodeURIComponent(courseId)}`)
+      .then(res => res.json())
+      .then(data => alert(data.message));
   }
 
+  // 2. 監聽影片是否完全播放完畢 (100%)
+  const video = document.getElementById('courseVideo');
+  video.addEventListener('ended', function() {
+    // 當影片播放結束（達到100%）時，自動發送完成課程請求
+    fetch(`${GAS_URL}?action=complete&name=${encodeURIComponent(userName)}&courseId=${encodeURIComponent(courseId)}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log(data);
+        alert("恭喜完成影片觀看！課程紀錄已更新。");
+      });
+  });
+</script>
   // 初始化載入
   fetchPassportData();
 </script>
